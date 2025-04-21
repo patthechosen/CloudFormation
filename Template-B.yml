@@ -1,0 +1,65 @@
+Parameters:
+  InstanceType:
+    Description: Enter the instance type for your EC2 instance
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t2.medium
+      - t3.micro
+      - m1.small
+      - m1.large
+      - m3.medium
+      - m3.large
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m5.large
+  DBPwd: 
+    NoEcho: true
+    Description: The database admin account password
+    Type: String
+    MinLength: 1
+    MaxLength: 41
+    AllowedPattern: ^[a-zA-Z0-9]*$
+Mappings:
+  RegionAmiMap: 
+    us-east-1:
+      HVM64: ami-0c02fb55956c7d316
+    us-east-2:
+      HVM64: ami-060a84cbcb5c14844
+    us-west-2:
+      HVM64: ami-08962a4068733a2b6
+    eu-west-1:
+      HVM64: ami-052efd3df9dad4825
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !FindInMap [RegionAmiMap, !Ref "AWS::Region", HVM64]
+      Tags:
+        - Key: Name 
+        - Value: My-Yaml-Ec2Instance
+        - Key: "PatrickDBPwd"
+        - Value: !Ref DBPwd
+    NetworkInterfaces:
+          SubnetId:
+            - Fn::ImportValue: !Sub '${NetworkStackName}-SubnetID'
+          GroupSet:
+            - Fn::ImportValue: !Sub '${NetworkStackName}-SecurityGroupID'
+
+    #SSMInstanceType: 
+      #Description: retrieve the value of the Instance type from SSM parameter store
+      #Type: "AWS::SSM::Parameter::Value<String>"
+      #Default: "/dev/ec2/InstanceType"
+    #SSMImageId: 
+      #Description: retrieve the value of the AMI from SSM parameter store by AWS
+      #Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+      #Default: "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64-gp2"
+    
+    Outputs:
+      InstanceId:
+        Description: This return the instance Id of our EC2
+        Value: !Ref EC2Instance
+      
