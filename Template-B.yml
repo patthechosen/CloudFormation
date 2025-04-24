@@ -40,7 +40,7 @@ Mappings:
     us-east-2:
       HVM64: ami-060a84cbcb5c14844
     us-west-2:
-      HVM64: ami-08962a4068733a2b6
+      HVM64: ami-05572e392e80aee89
     eu-west-1:
       HVM64: ami-052efd3df9dad4825
 
@@ -86,8 +86,8 @@ Outputs:
 
   Departmentsub: 
     Description: This sub is a variable within a given string
-    Value: !Sub "The department that the EC2 belongs to is ${DepartmentName}"
+    Value: !Sub "This Ec2 instance belong to ${DepartmentName} Department"
 
   AreaManagersub: 
     Description: This sub is a variable within a given string
-    Value: !Sub "The Area Manager of the EC2 is ${AreaManager}"
+    Value: !Sub "The Area Manager of the ${DepartmentName} Department is ${AreaManager}"
