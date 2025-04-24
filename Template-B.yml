@@ -1,6 +1,9 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Template to create an EC2 instance using imported VPC resources.
+
 Parameters:
   InstanceType:
-    Description: Enter the instance type for your EC2 instance
+    Description: EC2 instance type
     Type: String
     Default: t2.micro
     AllowedValues:
@@ -15,15 +18,23 @@ Parameters:
       - m4.xlarge
       - m4.2xlarge
       - m5.large
-  DBPwd: 
+  DepartmentName:
+      Description: Department name for the EC2 instance
+      Type: String
+  AreaManager:
+      Description: Area manager for the EC2 instance
+      Type: String
+
+  DBPwd:
     NoEcho: true
-    Description: The database admin account password
+    Description: DB admin password
     Type: String
     MinLength: 1
     MaxLength: 41
-    AllowedPattern: ^[a-zA-Z0-9]*$
+    AllowedPattern: '^[a-zA-Z0-9]*$'
+
 Mappings:
-  RegionAmiMap: 
+  RegionAmiMap:
     us-east-1:
       HVM64: ami-0c02fb55956c7d316
     us-east-2:
@@ -32,34 +43,51 @@ Mappings:
       HVM64: ami-08962a4068733a2b6
     eu-west-1:
       HVM64: ami-052efd3df9dad4825
+
 Resources:
   EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: !Ref InstanceType
       ImageId: !FindInMap [RegionAmiMap, !Ref "AWS::Region", HVM64]
+      SubnetId: !ImportValue SampleNetworkCrossStack-SubnetID
+      SecurityGroupIds:
+        - !ImportValue SampleNetworkCrossStack-SecurityGroupID
+      UserData:
+          Fn::Base64: !Sub |
+             #!/bin/bash
+             yum update -y
+             yum install httpd -y
+             systemctl start httpd
+             systemctl enable httpd
+             echo "Welcome to our first user data launch throught CloudFormation" > /var/www/html/index.html
       Tags:
-        - Key: Name 
-        - Value: My-Yaml-Ec2Instance
-        - Key: "PatrickDBPwd"
-        - Value: !Ref DBPwd
-    NetworkInterfaces:
-          SubnetId:
-            - Fn::ImportValue: !Sub '${NetworkStackName}-SubnetID'
-          GroupSet:
-            - Fn::ImportValue: !Sub '${NetworkStackName}-SecurityGroupID'
+        - Key: Name
+          Value: My-Yaml-Ec2instance
+        - Key: PatrickDBPwd
+          Value: !Ref DBPwd
+  myEIP:
+      Type: AWS::EC2::EIP
+      Properties:
+        InstanceId: !Ref EC2Instance
 
-    #SSMInstanceType: 
-      #Description: retrieve the value of the Instance type from SSM parameter store
-      #Type: "AWS::SSM::Parameter::Value<String>"
-      #Default: "/dev/ec2/InstanceType"
-    #SSMImageId: 
-      #Description: retrieve the value of the AMI from SSM parameter store by AWS
-      #Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
-      #Default: "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64-gp2"
-    
-    Outputs:
-      InstanceId:
-        Description: This return the instance Id of our EC2
-        Value: !Ref EC2Instance
-      
+Outputs:
+  InstanceId:
+    Description: Instance ID
+    Value: !Ref EC2Instance
+
+  PrivateIp:
+    Description: This returns the private IP of the EC2 instance
+    Value: !GetAtt EC2Instance.PrivateIp
+
+  PublicDnsName:
+    Description: This returns the public DNS name of the EC2 instance
+    Value: !GetAtt EC2Instance.PublicDnsName
+
+  Departmentsub: 
+    Description: This sub is a variable within a given string
+    Value: !Sub "The department that the EC2 belongs to is ${DepartmentName}"
+
+  AreaManagersub: 
+    Description: This sub is a variable within a given string
+    Value: !Sub "The Area Manager of the EC2 is ${AreaManager}"
