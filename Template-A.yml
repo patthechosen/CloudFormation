@@ -43,9 +43,7 @@ Resources:
     Type: 'AWS::EC2::SubnetNetworkAclAssociation'
     Properties:
       SubnetId: !Ref PublicSubnet
-      NetworkAclId: !GetAtt 
-        - VPC
-        - DefaultNetworkAcl
+      NetworkAclId: !GetAtt VPC.DefaultNetworkAcl
   WebServerSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
@@ -70,8 +68,6 @@ Outputs:
       Name: !Sub '${AWS::StackName}-SubnetID'
   WebServerSecurityGroup:
     Description: The security group ID to use for public web servers
-    Value: !GetAtt 
-      - WebServerSecurityGroup
-      - GroupId
+    Value: !GetAtt WebServerSecurityGroup.GroupId
     Export:
       Name: !Sub '${AWS::StackName}-SecurityGroupID'
